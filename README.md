@@ -1,6 +1,8 @@
 # S3 Static Website Automated Deployments
 
-## Intro
+Automate deployments to an S3 Static Website whenever code is committed to a particular branch in your CodeCommit repo.
+
+## Info
 
 index.js is a Lambda function to be used as a custom action in CodePipeline for deploying from CodeCommit to an S3 Bucket:
 
@@ -32,10 +34,10 @@ The CloudFormation template 'codepipeline.json' can be used to provision a pipel
 
 5. Deploy the CloudFormation stack in 'us-east-1', passing in the required parameters.
 
-The CloudFormation stack will create a pipeline (CodePipeline) and Lambda function as a custom action. 
+The CloudFormation stack will create a pipeline (CodePipeline) and Lambda function as a custom action.
 
 
 ## Caveats
 
 The output artifact from CodeCommit is a zip archive which is extracted to /tmp in the Lambda function. Lambda limits us to 512 MB in /tmp, so this function will not work if your codebase is larger than this. The function could easily be modified to extract individual files, upload, then delete, rather than extracting all in one go.
-
+It would be ideal if CodePipeline gave us the output artifact as a tarball, so that it could all be handled via a stream in memory.
