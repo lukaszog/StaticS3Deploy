@@ -3,6 +3,7 @@
 // CodePipeline should have the following "UserParameters":
 //  'artifact' : name of output artifact from the CodeCommit source stage.
 //  's3StaticSiteBucket' : name of desination bucket for the S3 static website.
+//  's3StaticSiteBucketRegion' : region of the S3 bucket.
 
 const fs = require('fs');
 const path = require('path');

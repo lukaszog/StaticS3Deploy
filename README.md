@@ -1,6 +1,8 @@
 # S3 Static Website Automated Deployments
 
-Automate deployments to an S3 Static Website whenever code is committed to a particular branch in your CodeCommit repo.
+Automate deployments to an S3 Static Website whenever code is committed to a particular branch in your CodeCommit repo. 
+
+There are simpler ways in which this could be achieved, e.g. http://stackoverflow.com/questions/32530352/best-strategy-to-deploy-static-site-to-s3-on-github-push. However this approach gives you a central deployment pipeline which could easily be extended to include code reviews, builds or tests.
 
 ## Info
 
