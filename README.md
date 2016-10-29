@@ -8,19 +8,17 @@ There are simpler ways in which this could be achieved, e.g. http://stackoverflo
 
 index.js is a Lambda function to be used as a custom action in CodePipeline for deploying from CodeCommit to an S3 Bucket:
 
- CodeCommit -> CodePipeline -> Lambda -> S3 Static Website
-
-The CloudFormation template 'codepipeline.json' can be used to provision a pipeline to automate deployments from CodeCommit to an S3 static website.
+ CodePipeline -> Lambda -> S3 Static Website
 
 ## Instructions
 
 1. Clone this repo
 
-  `git clone https://github.com/alexgibs/StaticS3Deploy.git`
+  `git clone https://github.com/rizavico/StaticS3Deploy.git`
 
 2. cd to the cloned repo:
 
-  `cd StaticS3Deploy.git`
+  `cd StaticS3Deploy`
 
 2. Run npm install to install the dependencies ('mkdirp' and 'yaunzl') for the Lambda function. 
 
@@ -30,14 +28,11 @@ The CloudFormation template 'codepipeline.json' can be used to provision a pipel
 
   `zip -r StaticS3SiteDeploy.zip index.js node_modules/`
 
-4. Upload the Lambda function zip archive to an S3 bucket in the 'us-east-1' region (CodeCommit is only available here at this stage).
+4. Upload the Lambda function zip archive to AWS Lambda Service using AWS Console.
 
-  `aws s3 cp StaticS3SiteDeploy.zip s3://<your-bucket> --region us-east-1`
+5. In your CodePipeline, add a new action that invokes this Lambda function. You should specific the following as UserParameters:
 
-5. Deploy the CloudFormation stack in 'us-east-1', passing in the required parameters.
-
-The CloudFormation stack will create a pipeline (CodePipeline) and Lambda function as a custom action.
-
+`{ "artifact":"MyApp", "s3StaticSiteBucket":"your-S3-destination-bucket-name", "s3StaticSiteBucketRegion":"Your S3 Region e.g. us-east-1", "sourceDirectory": "Directory in your artifacts that you want to publish to S3 e.g. public/assets"}`
 
 ## Caveats
 
