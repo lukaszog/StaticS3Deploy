@@ -4,6 +4,7 @@
 //  'artifact' : name of output artifact from the CodeCommit source stage.
 //  's3StaticSiteBucket' : name of desination bucket for the S3 static website.
 //  's3StaticSiteBucketRegion' : region of the S3 bucket.
+//  'sourceDirectory' : directory in your artifact that will be published to S3 (note: no trailing slash)
 
 const fs = require('fs');
 const path = require('path');
@@ -55,7 +56,8 @@ exports.handler = (event, context) => {
       return {
         artifactName: inputJson.artifact,
         s3StaticSiteBucket: inputJson.s3StaticSiteBucket,
-        s3StaticSiteBucketRegion: inputJson.s3StaticSiteBucketRegion
+        s3StaticSiteBucketRegion: inputJson.s3StaticSiteBucketRegion,
+        sourceDirectory: inputJson.sourceDirectory
       };
     } catch (err) {
       putJobFailure(err);
@@ -92,7 +94,7 @@ exports.handler = (event, context) => {
 
   function getCodeFromS3(s3client, key) {
     return new Promise((resolve, reject) => {
-      console.log('Downloading CodeCommit artifact.');
+      console.log('Downloading CodePipeline artifact.');
       const writeStream = fs.createWriteStream(filePath);
       const req = s3client.getObject({ Key: key });
       req.on('error', reject);
@@ -114,29 +116,31 @@ exports.handler = (event, context) => {
         if (err) reject;
         zipfile.readEntry();
         zipfile.on('entry', (entry) => {
-          if (/\/$/.test(entry.fileName)) {
-            // directory file names end with '/'
-            mkdirp(path.join(cwd, entry.fileName), (err) => {
-              if (err) reject;
-              zipfile.readEntry();
-            });
-          } else {
-            zipfile.openReadStream(entry, (err, readStream) => {
-              if (err) reject;
-              // ensure parent directory exists
-              mkdirp(path.join(cwd, path.dirname(entry.fileName)), (err) => {
+          if(sourceDirectoryRegEx.test(entry.fileName)){
+            if (/\/$/.test(entry.fileName)) {
+              // directory file names end with '/'
+              mkdirp(path.join(cwd, entry.fileName), (err) => {
                 if (err) reject;
-                readStream.pipe(fs.createWriteStream(path.join(cwd, entry.fileName)));
-                readStream.on('end', () => {
-                  // add file details to files array
-                  files.push({
-                    key: entry.fileName,
-                    body: fs.createReadStream(path.join(cwd, entry.fileName)),
+                zipfile.readEntry();
+              });
+            } else {
+              zipfile.openReadStream(entry, (err, readStream) => {
+                if (err) reject;
+                // ensure parent directory exists
+                mkdirp(path.join(cwd, path.dirname(entry.fileName)), (err) => {
+                  if (err) reject;
+                  readStream.pipe(fs.createWriteStream(path.join(cwd, entry.fileName)));
+                  readStream.on('end', () => {
+                    // add file details to files array
+                    files.push({
+                      key: entry.fileName,
+                      body: fs.createReadStream(path.join(cwd, entry.fileName)),
+                    });
+                    zipfile.readEntry();
                   });
-                  zipfile.readEntry();
                 });
               });
-            });
+            }
           }
         });
         zipfile.once('end', () => {
@@ -154,11 +158,13 @@ exports.handler = (event, context) => {
         Key: file.key,
         Body: file.body,
       };
+
       return s3UploadClient.putObject(params).promise();
     }));
   }
 
   const userParams = getUserParams();
+  const sourceDirectoryRegEx = new RegExp("^"+userParams.sourceDirectory+"/");
   const sourceBucket = getS3BucketLocation(userParams.artifactName);
   const destBucket = {
     bucket: userParams.s3StaticSiteBucket,
