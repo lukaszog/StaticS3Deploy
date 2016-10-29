@@ -116,7 +116,11 @@ exports.handler = (event, context) => {
         if (err) reject;
         zipfile.readEntry();
         zipfile.on('entry', (entry) => {
-          if(sourceDirectoryRegEx.test(entry.fileName)){
+          if(!sourceDirectoryRegEx.test(entry.fileName)){
+              console.log("  [X] Skipping: "+entry.fileName);
+              zipfile.readEntry();
+          }else{
+            console.log("  [+] Unzipping: "+entry.fileName);
             if (/\/$/.test(entry.fileName)) {
               // directory file names end with '/'
               mkdirp(path.join(cwd, entry.fileName), (err) => {
