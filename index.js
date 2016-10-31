@@ -11,6 +11,7 @@ const path = require('path');
 const AWS = require('aws-sdk');
 const unzip = require('yauzl');
 const mkdirp = require('mkdirp');
+const mime = require('mime');
 
 const filePath = '/tmp/artifact.zip';
 const cwd = '/tmp';
@@ -161,8 +162,9 @@ exports.handler = (event, context) => {
       const params = {
         Key: file.key,
         Body: file.body,
+        ContentType: mime.lookup(file.key)
       };
-
+      console.log(" > Uploading: "+file.key+" with mime "+mime.lookup(file.key));
       return s3UploadClient.putObject(params).promise();
     }));
   }
