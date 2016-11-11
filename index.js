@@ -170,7 +170,7 @@ exports.handler = (event, context) => {
   }
 
   const userParams = getUserParams();
-  const sourceDirectoryRegEx = new RegExp("^"+userParams.sourceDirectory+"/");
+  const sourceDirectoryRegEx = userParams.sourceDirectory != null && userParams.sourceDirectory.length >= 1 ? new RegExp("^"+userParams.sourceDirectory+"/") : new RegExp(".*");
   const sourceBucket = getS3BucketLocation(userParams.artifactName);
   const destBucket = {
     bucket: userParams.s3StaticSiteBucket,
